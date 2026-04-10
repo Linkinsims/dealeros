@@ -1,0 +1,406 @@
+// DealerOS - Automotive Dealership CRM Schema
+// South African Market - ZAR Currency
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ──────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  SUPER_ADMIN
+  DEALER_ADMIN
+  BRANCH_MANAGER
+  SALESPERSON
+}
+
+enum SubscriptionTier {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  TRIAL
+  CANCELLED
+  SUSPENDED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  TEST_DRIVE
+  QUOTE_SENT
+  NEGOTIATING
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum LeadSource {
+  WHATSAPP
+  PHONE
+  WEBSITE
+  AUTOTRADER
+  CARS_CO_ZA
+  FACEBOOK
+  WALK_IN
+  REFERRAL
+  OTHER
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+  ARCHIVED
+}
+
+enum VehicleCondition {
+  NEW
+  USED
+  DEMO
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum FinanceStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
+  DECLINED
+  FUNDED
+}
+
+enum TestDriveStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum FollowUpType {
+  WHATSAPP
+  SMS
+  EMAIL
+  PHONE_CALL
+  TASK
+}
+
+enum FollowUpStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  CANCELLED
+}
+
+// ─── MODELS ─────────────────────────────────────────────────────────────────────
+
+model Organization {
+  id            String             @id @default(cuid())
+  name          String
+  slug          String             @unique
+  logo          String?
+  phone         String?
+  email         String?
+  website       String?
+  address       String?
+  city          String?
+  province      String?
+  country       String             @default("South Africa")
+  vatNumber     String?
+  tier          SubscriptionTier   @default(STARTER)
+  status        SubscriptionStatus @default(INACTIVE)
+  monthlyPrice  Int                @default(49900) // in cents ZAR
+  maxBranches   Int                @default(1)
+  maxUsers      Int                @default(3)
+  trialEndsAt   DateTime?
+  activatedAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  branches Branch[]
+  users    User[]
+
+  @@map("organizations")
+}
+
+model Branch {
+  id             String       @id @default(cuid())
+  name           String
+  slug           String
+  phone          String?
+  email          String?
+  address        String?
+  city           String?
+  province       String?
+  isHeadOffice   Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  users          User[]
+  vehicles       Vehicle[]
+  leads          Lead[]
+  quotes         Quote[]
+  financeDeals   FinanceDeal[]
+  testDrives     TestDrive[]
+
+  @@unique([organizationId, slug])
+  @@map("branches")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String?
+  email          String   @unique
+  emailVerified  DateTime?
+  hashedPassword String?
+  image          String?
+  phone          String?
+  role           UserRole @default(SALESPERSON)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  branchId       String?
+  branch         Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  accounts       Account[]
+  sessions       Session[]
+  leadsAssigned  Lead[]        @relation("SalespersonLeads")
+  quotesCreated  Quote[]
+  followUps      FollowUp[]
+  testDrives     TestDrive[]   @relation("SalespersonTestDrives")
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Vehicle {
+  id            String           @id @default(cuid())
+  stockNumber   String
+  make          String
+  model         String
+  variant       String?
+  year          Int
+  mileage       Int              @default(0)
+  colour        String?
+  vin           String?
+  engineNumber  String?
+  registration  String?
+  transmission  String?
+  fuelType      String?
+  bodyType      String?
+  doors         Int?
+  condition     VehicleCondition @default(USED)
+  status        VehicleStatus    @default(AVAILABLE)
+  costPrice     Int              @default(0) // in cents ZAR
+  askingPrice   Int              @default(0) // in cents ZAR
+  description   String?          @db.Text
+  images        String[]         // array of image URLs
+  features      String[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  leads      Lead[]
+  quotes     Quote[]
+  testDrives TestDrive[]
+
+  @@unique([branchId, stockNumber])
+  @@map("vehicles")
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String?
+  idNumber     String?
+  source       LeadSource @default(OTHER)
+  status       LeadStatus @default(NEW)
+  notes        String?    @db.Text
+  budget       Int?       // in cents ZAR
+  tradeInValue Int?       // in cents ZAR
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  salespersonId  String?
+  salesperson    User?    @relation("SalespersonLeads", fields: [salespersonId], references: [id], onDelete: SetNull)
+  vehicleId      String?
+  vehicle        Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+
+  quotes       Quote[]
+  followUps    FollowUp[]
+  testDrives   TestDrive[]
+  financeDeals FinanceDeal[]
+
+  @@map("leads")
+}
+
+model Quote {
+  id              String      @id @default(cuid())
+  quoteNumber     String      @unique
+  status          QuoteStatus @default(DRAFT)
+  vehiclePrice    Int         // in cents ZAR
+  discount        Int         @default(0) // in cents ZAR
+  tradeInValue    Int         @default(0) // in cents ZAR
+  deposit         Int         @default(0) // in cents ZAR
+  fees            Int         @default(0) // admin/docs fees in cents ZAR
+  totalAmount     Int         // in cents ZAR
+  notes           String?     @db.Text
+  validUntil      DateTime?
+  sentAt          DateTime?
+  acceptedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  financeDeal FinanceDeal?
+
+  @@map("quotes")
+}
+
+model FinanceDeal {
+  id                String        @id @default(cuid())
+  status            FinanceStatus @default(PENDING)
+  bank              String?
+  financeAmount     Int           @default(0) // in cents ZAR
+  interestRate      Float?
+  term              Int?          // months
+  monthlyPayment    Int?          // in cents ZAR
+  balloonPayment    Int?          // in cents ZAR
+  depositAmount     Int           @default(0) // in cents ZAR
+  submittedAt       DateTime?
+  approvedAt        DateTime?
+  fundedAt          DateTime?
+  declinedAt        DateTime?
+  declineReason     String?
+  notes             String?       @db.Text
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  branchId  String
+  branch    Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  leadId    String
+  lead      Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  quoteId   String @unique
+  quote     Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@map("finance_deals")
+}
+
+model TestDrive {
+  id            String          @id @default(cuid())
+  status        TestDriveStatus @default(SCHEDULED)
+  scheduledAt   DateTime
+  completedAt   DateTime?
+  duration      Int?            // minutes
+  notes         String?         @db.Text
+  licenseVerified Boolean       @default(false)
+  feedback      String?         @db.Text
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  branchId      String
+  branch        Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  leadId        String
+  lead          Lead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  vehicleId     String
+  vehicle       Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  salespersonId String
+  salesperson   User    @relation("SalespersonTestDrives", fields: [salespersonId], references: [id], onDelete: Cascade)
+
+  @@map("test_drives")
+}
+
+model FollowUp {
+  id          String         @id @default(cuid())
+  type        FollowUpType   @default(TASK)
+  status      FollowUpStatus @default(PENDING)
+  title       String
+  description String?        @db.Text
+  dueAt       DateTime
+  completedAt DateTime?
+  isAutomated Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  leadId     String
+  lead       Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assignedToId String
+  assignedTo   User @relation(fields: [assignedToId], references: [id], onDelete: Cascade)
+
+  @@map("follow_ups")
+}
