@@ -80,7 +80,7 @@ export default function DashboardOverview() {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px' }}
                   itemStyle={{ color: '#fafafa' }}
-                  formatter={(value: number) => [`R ${(value/100000).toFixed(0)}k`, 'Revenue']}
+                  formatter={(value) => [`R ${(Number(value)/100000).toFixed(0)}k`, 'Revenue']}
                 />
                 <Line 
                   type="monotone" 
