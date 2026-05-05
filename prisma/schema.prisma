@@ -1,16 +1,15 @@
 // DealerOS - Automotive Dealership CRM Schema
 // South African Market - ZAR Currency
 
-generator client {
+ generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["public"]
+  schemas  = ["dealeros"]
 }
-
 
 // ─── ENUMS ──────────────────────────────────────────────────────────────────────
 
