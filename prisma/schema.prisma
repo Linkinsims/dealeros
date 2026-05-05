@@ -3,8 +3,8 @@
 
 generator client {
   provider        = "prisma-client-js"
-previewFeatures = ["multiSchema"]
-
+  previewFeatures = ["multiSchema"]
+}
 
 datasource db {
   provider = "postgresql"
