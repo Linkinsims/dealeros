@@ -7,7 +7,9 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["dealeros"]
 }
+
 
 // ─── ENUMS ──────────────────────────────────────────────────────────────────────
 
