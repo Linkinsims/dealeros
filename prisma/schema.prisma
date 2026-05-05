@@ -2,8 +2,9 @@
 // South African Market - ZAR Currency
 
 generator client {
-  provider = "prisma-client-js"
-}
+  provider        = "prisma-client-js"
+previewFeatures = ["multiSchema"]
+
 
 datasource db {
   provider = "postgresql"
