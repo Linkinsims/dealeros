@@ -104,34 +104,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Pricing Section */}
-        <section id="pricing" className="w-full py-24 bg-card/50 border-y border-border/50 px-4 relative overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
-          
-          <div className="max-w-6xl mx-auto relative z-10">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-5xl font-bold mb-4">Simple, SA-focused pricing</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Choose the tier that fits your dealership size. All prices in ZAR.</p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {/* Starter */}
-              <div className="rounded-2xl border border-border bg-background p-8 flex flex-col hover:border-primary/50 transition-colors">
-                <h3 className="text-xl font-bold mb-2">Starter</h3>
-                <p className="text-muted-foreground text-sm mb-6">Perfect for independent dealers.</p>
-                <div className="mb-6 flex items-baseline">
-                  <span className="text-4xl font-extrabold">R499</span>
-                  <span className="text-muted-foreground ml-2">/mo</span>
-                </div>
-                <ul className="space-y-3 mb-8 flex-1">
-                  <PricingFeat text="1 Branch" />
-                  <PricingFeat text="Up to 3 Users" />
-                  <PricingFeat text="Basic Inventory Mgmt" />
-                  <PricingFeat text="Lead Tracking" />
-                </ul>
-                <Link href="/onboarding" className="w-full py-3 rounded-lg border border-border text-center font-medium hover:bg-accent transition-colors">Get Started</Link>
-              </div>
-
               {/* Growth - Highlighted */}
               <div className="rounded-2xl border-2 border-primary bg-background p-8 flex flex-col relative transform md:-translate-y-4 shadow-2xl shadow-primary/20">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
